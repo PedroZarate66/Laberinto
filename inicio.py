@@ -1,6 +1,7 @@
 import pygame
 import sys
 from pantallaJuego import mostrar_juego
+pygame.mixer.init()
 
 # Inicializar pygame
 pygame.init()
@@ -13,6 +14,13 @@ pygame.display.set_caption("Juego del laberinto")
 # Cargar imagen de fondo
 fondo = pygame.image.load("./img/fondoInicio.jpg")  # Reemplaza "fondoInicio.jpg" con la ruta de tu imagen
 fondo = pygame.transform.scale(fondo, (800, ALTO))  # Escalar la imagen al tamaño de la ventana
+
+# Cargar y reproducir música del menú principal
+musica_menu = "Sonidos/menu.mp3"  # Ruta de la música del menú
+pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.load(musica_menu)
+pygame.mixer.music.play(-1)  # Reproduce en bucle
+
 
 # Cargar imágenes de enemigos, recompensas y mejoras
 imagen_enemigo    = pygame.image.load("./img/enemigo.jpg")  # Reemplaza con la ruta de la imagen del enemigo
@@ -133,6 +141,21 @@ def main():
                 # Cambiar a la pantalla del juego al presionar Enter
                 elif evento.key == pygame.K_RETURN:
                     pantalla_juego = True  # Cambiar a la pantalla de juego
+
+                     # Detener la música del menú
+                    pygame.mixer.music.stop()
+
+                   # Reproducir una canción diferente según la dificultad seleccionada
+                    if dificultad_seleccionada == "Fácil":
+                        pygame.mixer.music.load("Sonidos/fon_facil.mp3")
+                    elif dificultad_seleccionada == "Medio":
+                        pygame.mixer.music.load("Sonidos/fondo_medio.mp3")
+                        pygame.mixer.music.set_volume(0.3)
+                    elif dificultad_seleccionada == "Difícil":
+                        pygame.mixer.music.load("Sonidos/fondo_dificil.mp3")
+                    pygame.mixer.music.set_volume(0.1) 
+                    # Reproduce la música en loop
+                    pygame.mixer.music.play(-1)
 
         if pantalla_juego:
             # Llama a `mostrar_juego`, que luego llama a `iniciar_juego` en `juego.py`

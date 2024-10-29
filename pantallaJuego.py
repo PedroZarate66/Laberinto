@@ -3,6 +3,7 @@ import time
 from juego import ejecutar_laberinto
 
 pygame.init()
+pygame.mixer.init()
 
 # Colores
 NEGRO = (0, 0, 0)

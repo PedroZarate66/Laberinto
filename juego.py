@@ -2,13 +2,16 @@ import pygame
 import sys
 import time
 import random
+pygame.mixer.init()
 
+ANCHO, ALTO = 960, 650
 def colocar_monedas(laberinto, recompensas):
     # Encontrar las posiciones disponibles (celdas con valor 0)
     posiciones_disponibles = [(i, j) for i in range(len(laberinto)) for j in range(len(laberinto[0])) if laberinto[i][j] == 0]
     # Elegir posiciones aleatorias para las monedas
     posiciones_monedas = random.sample(posiciones_disponibles, recompensas)
     return posiciones_monedas  # Retornar las posiciones de las monedas para dibujarlas después
+posiciones_jugador = [(1, 1)]
 
 
 def colocar_enemigos(laberinto, enemigos):
@@ -18,7 +21,8 @@ def colocar_enemigos(laberinto, enemigos):
     posiciones_enemigos = random.sample(posiciones_disponibles, enemigos)
     return posiciones_enemigos  # Retornar las posiciones de las monedas para dibujarlas después
 
-def mostrar_menu_ganador(pantalla, fuente, score, tiempo_transcurrido):
+
+def mostrar_menu(pantalla, fuente, score, tiempo_transcurrido):
     # Definir los colores
     BLANCO = (255, 255, 255)
     GRIS = (100, 100, 100)
@@ -30,7 +34,7 @@ def mostrar_menu_ganador(pantalla, fuente, score, tiempo_transcurrido):
     pantalla.fill(NEGRO)
 
    # Mostrar mensaje de victoria
-    texto_ganador = fuente.render("¡Has ganado!", True, AMARILLO)
+    texto_ganador = fuente.render("Fin de la Partida", True, AMARILLO)
     pantalla.blit(texto_ganador, (300, 150)) 
     texto_puntaje = fuente.render(f"Puntaje: {score}", True, BLANCO)
     pantalla.blit(texto_puntaje, (300, 200))  
@@ -68,6 +72,7 @@ def mostrar_menu_ganador(pantalla, fuente, score, tiempo_transcurrido):
             pantalla.blit(texto_opcion, (boton_rect.x + 50, boton_rect.y + 10))
 
         pygame.display.flip()
+
 
 def ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, pared):
     # Inicializar Pygame
@@ -108,9 +113,77 @@ def ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, pared):
     img_meta= pygame.image.load('./img/meta_castillo.png')
     img_meta = pygame.transform.scale(img_meta, (50, 60))
 
-    img_enemigo = pygame.image.load('./img/enemigo.jpg')
+    img_enemigo = pygame.image.load('./img/ENEMIGO_M.png')
     img_enemigo = pygame.transform.scale(img_enemigo, (20, 20))
     
+    img_jugador = pygame.image.load('img\personaje\sprite_abajo1.png')
+    img_jugador = pygame.transform.scale(img_jugador, (20, 20))
+
+# Clase para el enemigo
+    class Enemigo:
+        def __init__(self, imagen, x, y, velocidad_x, velocidad_y):
+         self.imagen = imagen
+         self.x = x
+         self.y = y
+         self.velocidad_x = velocidad_x
+         self.velocidad_y = velocidad_y
+
+        def seguir_jugador(self, jugador_x, jugador_y):
+        # Calcular la diferencia entre las posiciones del enemigo y el jugador
+         diferencia_x = jugador_x - self.x
+         diferencia_y = jugador_y - self.y 
+
+         if abs(diferencia_x) > abs(diferencia_y):  # Prioriza moverse en X si la diferencia es mayor
+            self.x += 1 if diferencia_x > 0 else -1
+         else:  # Mueve en Y si la diferencia es mayor o igual
+            self.y += 1 if diferencia_y > 0 else -1
+
+        def mover(self):
+        # Actualizar la posición del enemigo
+         self.x += self.velocidad_x
+         self.y += self.velocidad_y
+
+        # Cambiar dirección al tocar los bordes
+         if self.x <= 0 or self.x >= ANCHO - 160:
+            self.velocidad_x = -self.velocidad_x
+         if self.y <= 0 or self.y >= ALTO - 160:
+            self.velocidad_y = -self.velocidad_y
+
+       
+        def dibujar(self, ventana):
+          ventana.blit(self.imagen, (self.x, self.y))
+
+    # Crear instancia del enemigo
+    enemigo_objeto = Enemigo(img_enemigo, ANCHO - 160, 0, velocidad_x=2, velocidad_y=2)
+
+# Clase para el enemigo
+    class Jugador:
+        def __init__(self, imagen, x, y, velocidad_x, velocidad_y):
+         self.imagen = imagen
+         self.x = x
+         self.y = y
+         self.velocidad_x = velocidad_x
+         self.velocidad_y = velocidad_y
+
+        def mover(self):
+        # Actualizar la posición del jugador
+         self.x += self.velocidad_x
+         self.y += self.velocidad_y
+
+        # Cambiar dirección al tocar los bordes
+         if self.x <= 0 or self.x >= ANCHO - 160:
+            self.velocidad_x = -self.velocidad_x
+         if self.y <= 0 or self.y >= ALTO - 160:
+            self.velocidad_y = -self.velocidad_y
+
+       
+        def dibujar(self, ventana):
+         ventana.blit(self.imagen, (self.x, self.y))
+
+
+# Crear instancia del jugador
+    jugador_objeto = Jugador(img_jugador, ANCHO - 160, 0, velocidad_x=2, velocidad_y=2)
+
      # Colocar monedas en el laberinto (solo una vez)
     posiciones_monedas = colocar_monedas(laberinto, recompensas)
 
@@ -146,32 +219,44 @@ def ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, pared):
                     if laberinto[jugador_y + 1][jugador_x] == 0:
                         jugador_y += 1
 
+
+         # Hacer que el enemigo siga al jugador
+        enemigo_objeto.seguir_jugador(jugador_x * TAMANO_CELDA, jugador_y * TAMANO_CELDA)
+
         
         # Comprobar si el jugador ha alcanzado la meta
         if jugador_x == meta_x and jugador_y == meta_y:
+            sonido_moneda = pygame.mixer.Sound("Sonidos/Ganar.mp3")
+            sonido_moneda.play()
             tiempo_transcurrido = time.time() - tiempo_inicio  # Calcula el tiempo transcurrido
-            opcion = mostrar_menu_ganador(pantalla, fuenteGanador, score, tiempo_transcurrido)
+            opcion = mostrar_menu(pantalla, fuenteGanador, score, tiempo_transcurrido)
+            
             return opcion
-
-        # Detectar colisiones con las monedas
-        enemigos_restantes = []
-        for (enemigos_x, enemigos_y) in posiciones_enemigos:
-            if jugador_x == enemigos_y and jugador_y == enemigos_x:
-                 score = score  # Aumenta el puntaje cuando el jugador recoge una moneda
-            else:
-                enemigos_restantes.append((enemigos_x, enemigos_y))  # Moneda no recolectada
-
-        posiciones_enemigos = enemigos_restantes
-
-            #posiciones enemigos
+        
+            #posiciones monedas
         monedas_restantes = []
         for (moneda_x, moneda_y) in posiciones_monedas:
             if jugador_x == moneda_y and jugador_y == moneda_x:
                 score += 1  # Aumenta el puntaje cuando el jugador recoge una moneda
+                sonido_moneda = pygame.mixer.Sound("Sonidos/moneda.mp3")
+                sonido_moneda.play()
             else:
                 monedas_restantes.append((moneda_x, moneda_y))  # Moneda no recolectada
 
         posiciones_monedas = monedas_restantes
+       
+       # posicion de enemigos
+        enemigos_restantes = []
+        for (enemigos_x, enemigos_y) in posiciones_enemigos:
+            if jugador_x == enemigos_y and jugador_y == enemigos_x:
+               sonido_perder = pygame.mixer.Sound("Sonidos/perder.mp3")
+               sonido_perder.play()
+        # Mostrar el menú de derrota
+               opcion = mostrar_menu(pantalla, fuenteGanador, score, tiempo_transcurrido)
+               return opcion
+            else:
+                 enemigos_restantes.append((enemigos_x, enemigos_y))
+        posiciones_enemigos = enemigos_restantes
 
         # Dibujar el laberinto
         pantalla.fill(NEGRO)
@@ -189,9 +274,10 @@ def ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, pared):
         # # Dibujar enemigos
         for (x, y) in posiciones_enemigos:
             pantalla.blit(img_enemigo, (y * TAMANO_CELDA, x * TAMANO_CELDA))
+            
 
         # Dibujar al jugador
-        pygame.draw.rect(pantalla, ROJO, (jugador_x * TAMANO_CELDA, jugador_y * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA))
+        pantalla.blit(img_jugador, (jugador_x * TAMANO_CELDA, jugador_y * TAMANO_CELDA))
 
         # Dibujar la meta
         pantalla.blit(img_meta, (meta_x * TAMANO_CELDA, meta_y * TAMANO_CELDA))
@@ -210,7 +296,8 @@ def ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, pared):
         pantalla.blit(fuente.render(f"{score}", True, BLANCO), (350, ALTO - 50))
         pantalla.blit(fuente.render(f"Mejoras: {mejoras}", True, BLANCO), (400, ALTO - 50))
         pantalla.blit(fuente.render(f"Enemigos: {enemigos}", True, BLANCO), (550, ALTO - 50))
-
+         
+        
 
         # Actualizar la pantalla
         pygame.display.flip()
