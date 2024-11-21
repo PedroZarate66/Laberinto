@@ -1,50 +1,54 @@
 import pygame
 import sys
-from pantallaJuego import mostrar_juego
-pygame.mixer.init()
+from juego import ejecutar_laberinto
 
 # Inicializar pygame
 pygame.init()
+pygame.mixer.init()
 
 # Configuración de la ventana
 ANCHO, ALTO = 960, 650
-ventana     = pygame.display.set_mode((ANCHO, ALTO))
+ventana = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Juego del laberinto")
+
+# Cargar música de fondo del menú
+pygame.mixer.music.load("./Sonidos/menu.mp3")
+pygame.mixer.music.play(-1)
 
 # Cargar imagen de fondo
 fondo = pygame.image.load("./img/fondoInicio.jpg")  # Reemplaza "fondoInicio.jpg" con la ruta de tu imagen
 fondo = pygame.transform.scale(fondo, (800, ALTO))  # Escalar la imagen al tamaño de la ventana
 
-# Cargar y reproducir música del menú principal
-musica_menu = "Sonidos/menu.mp3"  # Ruta de la música del menú
-pygame.mixer.music.set_volume(0.1)
-pygame.mixer.music.load(musica_menu)
-pygame.mixer.music.play(-1)  # Reproduce en bucle
-
-
 # Cargar imágenes de enemigos, recompensas y mejoras
-imagen_enemigo    = pygame.image.load("./img/enemigo.jpg")  # Reemplaza con la ruta de la imagen del enemigo
-imagen_enemigo    = pygame.transform.scale(imagen_enemigo, (160, 160))  # Escalar imagen del enemigo
+imagen_enemigo = pygame.image.load("./img/enemigo.jpg")  # Reemplaza con la ruta de la imagen del enemigo
+imagen_enemigo = pygame.transform.scale(imagen_enemigo, (160, 160))  # Escalar imagen del enemigo
 imagen_recompensa = pygame.image.load("./img/recompensas.jpg")  # Reemplaza con la ruta de la imagen de la recompensa
 imagen_recompensa = pygame.transform.scale(imagen_recompensa, (160, 160))  # Escalar imagen de la recompensa
-imagen_mejoras    = pygame.image.load("./img/mejoras.jpg")  # Reemplaza con la ruta de la imagen de la mejora
-imagen_mejoras    = pygame.transform.scale(imagen_mejoras, (160, 160))  # Escalar imagen de la mejora
+imagen_mejoras = pygame.image.load("./img/mejoras.jpg")  # Reemplaza con la ruta de la imagen de la mejora
+imagen_mejoras = pygame.transform.scale(imagen_mejoras, (160, 160))  # Escalar imagen de la mejora
 
 # Cargar imagen del botón "play"
-imagen_play              = pygame.image.load("./img/game.png")  # Imagen normal del botón play
+imagen_play = pygame.image.load("./img/game.png")  # Imagen normal del botón play
 imagen_play_seleccionado = pygame.image.load("./img/game.png")  # Imagen del botón play seleccionado
-imagen_play              = pygame.transform.scale(imagen_play, (50, 50))  # Escalar imagen del botón
+imagen_play = pygame.transform.scale(imagen_play, (50, 50))  # Escalar imagen del botón
 imagen_play_seleccionado = pygame.transform.scale(imagen_play_seleccionado, (50, 50))  # Escalar imagen seleccionada
 
+imagen_pared1 = pygame.image.load('./img/pared1.png')
+imagen_pared1 = pygame.transform.scale(imagen_pared1, (30, 30))
+imagen_pared2 = pygame.image.load('./img/pared2.png')
+imagen_pared2 = pygame.transform.scale(imagen_pared2, (30, 30))
+imagen_pared3 = pygame.image.load('./img/pared3.png')
+imagen_pared3 = pygame.transform.scale(imagen_pared3, (30, 30))
+
 # Colores
-NEGRO       = (0  , 0  , 0)
-GRIS_CLARO  = (170, 170, 170)
+NEGRO = (0, 0, 0)
+GRIS_CLARO = (170, 170, 170)
 GRIS_OSCURO = (100, 100, 100)
-VERDE       = (0  , 255, 0)
-BLANCO      = (255, 255, 255)
+VERDE = (0, 255, 0)
+BLANCO = (255, 255, 255)
 
 # Fuente
-fuente        = pygame.font.Font(None, 40)
+fuente = pygame.font.Font(None, 40)
 fuente_grande = pygame.font.Font(None, 50)  # Fuente más grande para los números
 
 # Opciones del menú
@@ -56,28 +60,29 @@ boton_rects = [
     pygame.Rect(50, 260, 160, 40),  # Botón "Medio"
     pygame.Rect(50, 320, 160, 40)    # Botón "Difícil"
 ]
+
 # Variables para el estado del juego
-pantalla_juego          = False  # Indica si estamos en el menú o en el juego
+pantalla_juego = False  # Indica si estamos en el menú o en el juego
 dificultad_seleccionada = "Fácil"  # Variable para la dificultad seleccionada
 
 # Variables de dificultad
-enemigos    = 0
+enemigos = 0
 recompensas = 0
-mejoras     = 0
+mejoras = 0
 
 # Función para ajustar la cantidad de enemigos y recompensas según la dificultad
 def ajustar_dificultad(dificultad):
     global enemigos, recompensas, mejoras
     if dificultad == "Fácil":
-        enemigos = 3
+        enemigos = 2
         recompensas = 10
         mejoras = 5
     elif dificultad == "Medio":
-        enemigos = 5
+        enemigos = 3
         recompensas = 15
         mejoras = 4
     elif dificultad == "Difícil":
-        enemigos = 7
+        enemigos = 5
         recompensas = 20
         mejoras = 3
 
@@ -116,6 +121,22 @@ def dibujar_enemigos_recompensas():
     texto_mejoras = fuente_grande.render(f"{mejoras}", True, BLANCO)  # Usar fuente más grande
     ventana.blit(texto_mejoras, (ANCHO - 160, 520))  # Posición del texto de mejoras
     
+# Función para dibujar la pantalla del juego
+def mostrar_juego(dificultad_seleccionada, enemigos, recompensas, mejoras):
+    if dificultad_seleccionada == "Fácil":
+        nivel = "Fácil"
+        resultado = ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, imagen_pared1)
+
+    elif dificultad_seleccionada == "Medio":
+        nivel = "Medio"
+        resultado = ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, imagen_pared2)
+
+    elif dificultad_seleccionada == "Difícil":
+        nivel = "Difícil"
+        resultado = ejecutar_laberinto(nivel, enemigos, recompensas, mejoras, imagen_pared3)
+
+    # Después de que el juego termina, se devuelve el resultado para saber qué hacer
+    return resultado
 
 # Ciclo principal
 def main():
@@ -140,40 +161,21 @@ def main():
                     ajustar_dificultad(dificultad_seleccionada)
                 # Cambiar a la pantalla del juego al presionar Enter
                 elif evento.key == pygame.K_RETURN:
+                    pygame.mixer.music.stop()  # Detener la música del menú al iniciar el juego
                     pantalla_juego = True  # Cambiar a la pantalla de juego
 
-                     # Detener la música del menú
-                    pygame.mixer.music.stop()
-
-                   # Reproducir una canción diferente según la dificultad seleccionada
-                    if dificultad_seleccionada == "Fácil":
-                        pygame.mixer.music.load("Sonidos/fon_facil.mp3")
-                    elif dificultad_seleccionada == "Medio":
-                        pygame.mixer.music.load("Sonidos/fondo_medio.mp3")
-                        pygame.mixer.music.set_volume(0.3)
-                    elif dificultad_seleccionada == "Difícil":
-                        pygame.mixer.music.load("Sonidos/fondo_dificil.mp3")
-                    pygame.mixer.music.set_volume(0.1) 
-                    # Reproduce la música en loop
-                    pygame.mixer.music.play(-1)
-
         if pantalla_juego:
-            # Llama a `mostrar_juego`, que luego llama a `iniciar_juego` en `juego.py`
+            # Determina el nivel según la dificultad seleccionada
             resultado = mostrar_juego(dificultad_seleccionada, enemigos, recompensas, mejoras)
-            
             # Gestionar el resultado del juego
             if resultado == "menú":
-                pantalla_juego = False  # Regresar al menú
-            elif resultado == "reiniciar":
-                continue  # Reiniciar el juego sin salir al menú
-            elif resultado == "salir":
-                ejecutando = False  # Salir del juego
+                pantalla_juego = False
+                pygame.mixer.music.play(-1)  # Reproducir música del menú nuevamente
         else:
             dibujar_menu(seleccionado)
             dibujar_enemigos_recompensas()
 
-
         pygame.display.flip()
 
-# Ejecutar el menú
-main()
+if __name__ == "__main__":
+    main()
